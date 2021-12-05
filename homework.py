@@ -32,6 +32,7 @@ logging.basicConfig(
 
 
 def send_message(bot, message):
+    """Sending message in telegram chat"""
     try:
         bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
         logging.info(f'Message sent successfully: {message}')
@@ -40,7 +41,7 @@ def send_message(bot, message):
 
 
 def get_api_answer(current_timestamp):
-
+    """Getting answer from yandex_hw api"""
     logging.debug('Getting response')
     timestamp = current_timestamp or int(time.time())
     params = {'from_date': timestamp}
@@ -53,6 +54,7 @@ def get_api_answer(current_timestamp):
 
 
 def check_response(response):
+    """Checking if the response from yandex api has proper format"""
     logging.debug('Checking response')
     if not isinstance(response, dict):
         raise TypeError
@@ -64,6 +66,7 @@ def check_response(response):
 
 
 def parse_status(homework):
+    """Parsing status of homeworks from response"""
     logging.debug('Start parsing hw status')
     homework_name = homework['homework_name']
     homework_status = homework['status']
@@ -72,6 +75,7 @@ def parse_status(homework):
 
 
 def check_tokens():
+    """Checking virtual env tokens"""
     if not PRACTICUM_TOKEN:
         logging.critical('RACTICUM_TOKEN is missing')
         return False
