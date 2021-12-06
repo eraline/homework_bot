@@ -3,9 +3,14 @@ import sys
 import os
 import requests
 import time
+
 import telegram
-from pprint import pprint
 from dotenv import load_dotenv
+
+from exception import (
+    UnexpectedResponseCode,
+    # NoneInMandatoryValue,
+    InvalidTokens)
 
 load_dotenv()
 
@@ -24,7 +29,7 @@ HOMEWORK_STATUSES = {
 }
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     stream=sys.stdout,
     filemode='a',
     format='%(asctime)s, %(levelname)s, %(name)s, %(message)s'
@@ -45,37 +50,49 @@ def get_api_answer(current_timestamp):
     logging.debug('Getting response')
     timestamp = current_timestamp or int(time.time())
     params = {'from_date': timestamp}
-    response = requests.get(ENDPOINT, headers=HEADERS, params=params)
+    try:
+        response = requests.get(ENDPOINT, headers=HEADERS, params=params)
+    except Exception as error:
+        logging.error(f'Error while getting response: {error}')
+
     if response.status_code == 200:
         response = response.json()
+        logging.debug(response)
         return response
     else:
-        raise BaseException('StatusCode is not 200')
+        raise UnexpectedResponseCode
 
 
 def check_response(response):
     """Checking if the response from yandex api has proper format."""
     logging.debug('Checking response')
-    if not isinstance(response, dict):
+    if (not isinstance(response, dict) or
+       not isinstance(response['homeworks'], list)):
         raise TypeError
-    if not isinstance(response['homeworks'], list):
-        raise TypeError
-    if 'homeworks' not in response:
-        raise KeyError
+    logging.debug('Response is valid')
     return response['homeworks']
 
 
 def parse_status(homework):
     """Parsing status of homeworks from response."""
     logging.debug('Start parsing hw status')
-    homework_name = homework['homework_name']
-    homework_status = homework['status']
+    homework_name = homework.get('homework_name')
+    homework_status = homework.get('status')
+    # Код ниже не пропускает тест 'test_parse_status_no_homework_name_key'
+    # По идее ведь, если бы я оставил как было и присваивал без get,
+    # то в случае отсутствующего значения у меня бы выбрасывалась ошибка,
+    # которая отловилась бы в main()
+    # if homework_status is None or homework_name is None:
+    #     logging.error('Invalid values in hw details')
+    #     raise NoneInMandatoryValue
+
     verdict = HOMEWORK_STATUSES[homework_status]
     return f'Изменился статус проверки работы "{homework_name}". {verdict}'
 
 
 def check_tokens():
     """Checking virtual env tokens."""
+    logging.debug('Checking tokens')
     if not PRACTICUM_TOKEN:
         logging.critical('RACTICUM_TOKEN is missing')
         return False
@@ -90,25 +107,24 @@ def check_tokens():
 
 def main():
     """Основная логика работы бота."""
-    last_err_msg = ''
     logging.info('Starting bot')
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     current_timestamp = int(time.time())
-    logging.debug('Checking tokens')
+
     if check_tokens() is True:
         logging.debug('Tokens are valid')
     else:
         logging.critical('TOKENS ARE NOT VALID')
-        raise BaseException('Invalid tokens')
+        raise InvalidTokens
     while True:
         try:
+            last_err_msg = ''
             response = get_api_answer(current_timestamp)
             homeworks = check_response(response)
-            pprint(homeworks)
             for homework in homeworks:
                 message = parse_status(homework)
                 send_message(bot, message)
-            current_timestamp = int(time.time())
+            current_timestamp = response.get('current_date')
             time.sleep(RETRY_TIME)
 
         except Exception as error:
