@@ -66,8 +66,8 @@ def get_api_answer(current_timestamp):
 def check_response(response):
     """Checking if the response from yandex api has proper format."""
     logging.debug('Checking response')
-    if (not isinstance(response, dict) or
-       not isinstance(response['homeworks'], list)):
+    if (not isinstance(response, dict)
+       or not isinstance(response['homeworks'], list)):
         raise TypeError
     logging.debug('Response is valid')
     return response['homeworks']
