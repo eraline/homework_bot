@@ -29,7 +29,7 @@ HOMEWORK_STATUSES = {
 }
 
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     stream=sys.stdout,
     filemode='a',
     format='%(asctime)s, %(levelname)s, %(name)s, %(message)s'
@@ -60,7 +60,7 @@ def get_api_answer(current_timestamp):
         logging.debug(response)
         return response
     else:
-        raise UnexpectedResponseCode
+        raise UnexpectedResponseCode("The response code is not 200")
 
 
 def check_response(response):
@@ -68,7 +68,7 @@ def check_response(response):
     logging.debug('Checking response')
     if (not isinstance(response, dict)
        or not isinstance(response['homeworks'], list)):
-        raise TypeError
+        raise TypeError('Type Error')
     logging.debug('Response is valid')
     return response['homeworks']
 
@@ -115,7 +115,7 @@ def main():
         logging.debug('Tokens are valid')
     else:
         logging.critical('TOKENS ARE NOT VALID')
-        raise InvalidTokens
+        raise InvalidTokens('Token is invalid')
     while True:
         try:
             last_err_msg = ''
@@ -129,9 +129,11 @@ def main():
 
         except Exception as error:
             logging.error(error)
+            err_msg = str(error)
+            if last_err_msg != err_msg:
+                send_message(bot, err_msg)
+                last_err_msg = err_msg
             time.sleep(RETRY_TIME)
-            if last_err_msg != error:
-                send_message(bot, error)
 
 
 if __name__ == '__main__':
