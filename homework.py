@@ -29,7 +29,7 @@ HOMEWORK_STATUSES = {
 }
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     stream=sys.stdout,
     filemode='a',
     format='%(asctime)s, %(levelname)s, %(name)s, %(message)s'
