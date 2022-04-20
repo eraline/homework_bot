@@ -3,8 +3,6 @@
 Telegram bot for my personal use that checks my homework status in **Yandex.Practicum** (Russian Online Platform) and send me the recent updates.
 
 Stack: Python 3, python-telegram-bot
-#### Для работы бота необходимо указать: PRAKTIKUM_TOKEN, TELEGRAM_TOKEN и TELEGRAM_CHAT_ID в .dotenv
-
 ### How start project:
 
 Clone a repository and go to command line:
